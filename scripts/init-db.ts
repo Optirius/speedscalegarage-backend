@@ -11,17 +11,12 @@ async function initDatabase() {
 
   try {
     // 1. Push Prisma schema to PostgreSQL
-    console.log('📦 Step 1/3: Synchronizing schema and creating tables in PostgreSQL...');
-    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    console.log('📦 Step 1/2: Synchronizing schema and creating tables in PostgreSQL...');
+    execSync('npx prisma db push --skip-generate --accept-data-loss', { stdio: 'inherit' });
     console.log('✅ Tables synchronized successfully!\n');
 
-    // 2. Generate updated Prisma Client
-    console.log('⚙️  Step 2/3: Generating Prisma Client...');
-    execSync('npx prisma generate', { stdio: 'inherit' });
-    console.log('✅ Prisma client generated!\n');
-
-    // 3. Seed Database
-    console.log('🌱 Step 3/3: Seeding initial data, accounts & products...\n');
+    // 2. Seed Database
+    console.log('🌱 Step 2/2: Seeding initial data, accounts & products...\n');
 
     // 3.1 Create Dummy Admin Account
     const adminPassword = await bcrypt.hash('speedscale123', 10);

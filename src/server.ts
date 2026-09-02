@@ -86,13 +86,30 @@ async function bootstrap() {
     app.log.error(error);
     if (error.name === 'ZodError') {
       return reply.status(400).send({
+        statusCode: 400,
         error: 'Validation Error',
+        message: error.issues?.[0]?.message || 'Invalid input data',
         details: error.issues
       });
     }
+
+    // Handle Database Connection Errors gracefully
+    if (
+      error.code === 'P1001' || 
+      (typeof error.message === 'string' && error.message.includes("Can't reach database server"))
+    ) {
+      return reply.status(503).send({
+        statusCode: 503,
+        error: 'Service Unavailable',
+        message: 'Database server is unreachable. Please ensure PostgreSQL is running (e.g. docker compose up -d).'
+      });
+    }
+
     const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
     return reply.status(statusCode).send({
-      error: error.message || 'Internal Server Error'
+      statusCode,
+      error: error.name || 'Internal Server Error',
+      message: error.message || 'An unexpected error occurred.'
     });
   });
 

@@ -22,7 +22,7 @@
     - [x] `OrderItem` (id, orderId, productId, productName, unitPrice, quantity, totalPrice)
     - [x] `Coupon` (id, code, discountPercent, minOrderValue, maxUses, usedCount, expiresAt, isActive)
   - [x] Generate Prisma client
-  - [x] Write seed script (`prisma/seed.ts`) with initial categories, demo diecast products, and admin account
+  - [x] Write seed and init scripts (`npm run db:init`) with initial categories, demo diecast products, and admin account
 
 ---
 
@@ -83,3 +83,17 @@
   - [x] Service endpoint `POST /api/v1/facebook/events` for server-side event tracking
 - [x] **5.2 Facebook Product Catalog Feed**
   - [x] Endpoint `GET /api/v1/facebook/catalog.xml` returning Facebook-compliant RSS/XML product feed for Facebook Commerce Manager
+
+---
+
+## 🧪 6. Backend Unit & Integration Testing Suite
+
+- [x] **6.1 Test Tooling Setup**
+  - [x] Install Vitest in `backend-repo`
+  - [x] Configure `vitest.config.ts` with test environment and helper factories
+- [x] **6.2 Route & Controller Unit Tests**
+  - [x] `tests/auth.test.ts`: Register, login, bad password rejection, admin role verification, JWT verification
+  - [x] `tests/products.test.ts`: Product filtering by scale (`1:18`, `1:24`, `1:64`), price sorting, admin CRUD, and stock decrement
+  - [x] `tests/categories.test.ts`: Category listing, product count aggregation, and admin creation
+  - [x] `tests/orders.test.ts`: Cash on Delivery checkout, stock deduction, order numbering, and admin KPI calculations
+  - [x] `tests/facebook.test.ts`: Dynamic XML RSS catalog format verification and CAPI event payload validation

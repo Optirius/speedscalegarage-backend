@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
-    "db:init": "tsx scripts/init-db.ts"
+    "db:init": "tsx scripts/init-db.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",
@@ -33,6 +34,7 @@
     "@types/node": "^20.14.9",
     "prisma": "^5.19.1",
     "tsx": "^4.19.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.11"
   }
 }

@@ -7,6 +7,8 @@ const defaultSettings: Record<string, string> = {
   shipping_dhaka: '60',
   shipping_outside_dhaka: '120',
   free_shipping_threshold: '15000',
+  variant_label: 'Variant / Scale',
+  variant_types: '1:18, 1:24, 1:32, 1:43, 1:64, Standard, Accessory',
   announcement_text: '⚡ Free Express Delivery on all Scale Model orders over ৳15,000 | 100% Authentic Diecast Collector Garage',
   announcement_active: 'true',
   contact_phone: '+880 1700-000000',

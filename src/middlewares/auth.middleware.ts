@@ -33,3 +33,12 @@ export async function requireAdmin(request: FastifyRequest, reply: FastifyReply)
     return reply.status(401).send({ error: 'Unauthorized. Admin session required.' });
   }
 }
+
+export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply) {
+  try {
+    const payload = await request.jwtVerify<TokenPayload>();
+    request.user = payload;
+  } catch (err) {
+    // Optional auth - continues unauthenticated
+  }
+}

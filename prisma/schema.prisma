@@ -60,6 +60,7 @@ model User {
   addresses Address[]
   orders    Order[]
   cartItems CartItem[]
+  reviews   Review[]
 
   @@map("users")
 }
@@ -115,6 +116,7 @@ model Product {
   images     ProductImage[]
   orderItems OrderItem[]
   cartItems  CartItem[]
+  reviews    Review[]
 
   @@index([categoryId])
   @@index([scaleRatio])
@@ -210,4 +212,47 @@ model Coupon {
   createdAt       DateTime  @default(now())
 
   @@map("coupons")
+}
+
+model Review {
+  id                 String   @id @default(uuid())
+  productId          String
+  userId             String?
+  customerName       String
+  rating             Int      @default(5)
+  title              String?
+  comment            String   @db.Text
+  isVerifiedPurchase Boolean  @default(false)
+  isApproved         Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([isApproved])
+  @@map("reviews")
+}
+
+model Banner {
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String?
+  badgeText    String?
+  image        String
+  link         String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("banners")
+}
+
+model StoreSetting {
+  key         String   @id
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("store_settings")
 }

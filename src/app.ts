@@ -17,6 +17,10 @@ import { cartRoutes } from './routes/cart.routes.js';
 import { orderRoutes } from './routes/order.routes.js';
 import { uploadRoutes } from './routes/upload.routes.js';
 import { facebookRoutes } from './routes/facebook.routes.js';
+import { reviewRoutes } from './routes/review.routes.js';
+import { bannerRoutes } from './routes/banner.routes.js';
+import { settingRoutes } from './routes/setting.routes.js';
+import { couponRoutes } from './routes/coupon.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +84,10 @@ export async function buildApp() {
   await app.register(orderRoutes, { prefix: '/api/v1/orders' });
   await app.register(uploadRoutes, { prefix: '/api/v1/uploads' });
   await app.register(facebookRoutes, { prefix: '/api/v1/facebook' });
+  await app.register(reviewRoutes, { prefix: '/api/v1/reviews' });
+  await app.register(bannerRoutes, { prefix: '/api/v1/banners' });
+  await app.register(settingRoutes, { prefix: '/api/v1/settings' });
+  await app.register(couponRoutes, { prefix: '/api/v1/coupons' });
 
   // 8. Error Handler
   app.setErrorHandler((error: FastifyError | Error | any, _request, reply) => {

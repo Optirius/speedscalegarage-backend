@@ -292,7 +292,94 @@ async function initDatabase() {
         }
       }
     });
-    console.log(`📦 Sample Demo Order Seeded: ${sampleOrder.orderNumber}`);
+    // 3.7 Seed Default Store Settings
+    const defaultSettings = [
+      { key: 'shipping_dhaka', value: '60', description: 'Inside Dhaka Standard Delivery Fee (BDT)' },
+      { key: 'shipping_outside_dhaka', value: '120', description: 'Outside Dhaka Delivery Fee (BDT)' },
+      { key: 'free_shipping_threshold', value: '15000', description: 'Subtotal threshold for free shipping (BDT)' },
+      { key: 'announcement_text', value: '⚡ Free Express Delivery on all Scale Model orders over ৳15,000 | 100% Authentic Diecast Collector Garage', description: 'Header announcement marquee' },
+      { key: 'announcement_active', value: 'true', description: 'Toggle top announcement bar' },
+      { key: 'contact_phone', value: '+880 1700-000000', description: 'Store direct call line' },
+      { key: 'contact_whatsapp', value: '+8801700000000', description: 'WhatsApp order line' },
+      { key: 'contact_email', value: 'support@speedscalegarage.com', description: 'Support email' },
+      { key: 'facebook_page_url', value: 'https://facebook.com/speedscalegarage', description: 'Facebook Page URL' },
+      { key: 'instagram_url', value: 'https://instagram.com/speedscalegarage', description: 'Instagram handle' }
+    ];
+
+    for (const s of defaultSettings) {
+      await prisma.storeSetting.upsert({
+        where: { key: s.key },
+        update: { value: s.value, description: s.description },
+        create: s
+      });
+    }
+    console.log(`⚙️  ${defaultSettings.length} Store Configuration Settings Seeded`);
+
+    // 3.8 Seed Dynamic Hero Banners
+    const banners = [
+      {
+        title: 'Precision in Every Single Scale',
+        subtitle: 'Bangladesh’s premier destination for authentic 1:18, 1:24, and 1:64 precision collector diecasts.',
+        badgeText: '🏆 Premium Diecast Showcase',
+        image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=1600',
+        link: '/search',
+        displayOrder: 1,
+        isActive: true
+      },
+      {
+        title: '1:18 Modern Hypercar Fleet',
+        subtitle: 'Detailed opening engines, aerodynamic carbon textures, and steerable rubber wheels.',
+        badgeText: '🔥 New Arrivals 2026',
+        image: 'https://images.unsplash.com/photo-1544636331-e268592033c2?auto=format&fit=crop&q=80&w=1600',
+        link: '/category/modern-supercars',
+        displayOrder: 2,
+        isActive: true
+      }
+    ];
+
+    await prisma.banner.deleteMany({});
+    for (const b of banners) {
+      await prisma.banner.create({ data: b });
+    }
+    console.log(`🖼️  ${banners.length} Dynamic Hero Banners Seeded`);
+
+    // 3.9 Seed Sample Customer Reviews for seeded products
+    const mustang = await prisma.product.findFirst({ where: { sku: 'SSG-0018-MST' } });
+    if (mustang) {
+      await prisma.review.deleteMany({ where: { productId: mustang.id } });
+      await prisma.review.createMany({
+        data: [
+          {
+            productId: mustang.id,
+            customerName: 'Ashikur R.',
+            rating: 5,
+            title: 'Flawless paint finish & heavy diecast weight!',
+            comment: 'The door hinges and engine bay details are museum-grade. Packaging in double bubble wrap was exceptional.',
+            isVerifiedPurchase: true,
+            isApproved: true
+          },
+          {
+            productId: mustang.id,
+            customerName: 'Imtiaz Hossain',
+            rating: 5,
+            title: 'Best 1:18 Fastback in Bangladesh',
+            comment: 'Arrived within 24 hours in Dhaka via Cash on Delivery. Truly 100% authentic.',
+            isVerifiedPurchase: true,
+            isApproved: true
+          },
+          {
+            productId: mustang.id,
+            customerName: 'Kazi Farhan',
+            rating: 4,
+            title: 'Great scale ratio and interior flocking',
+            comment: 'Very sharp lines on the bodywork. Excellent communication on WhatsApp.',
+            isVerifiedPurchase: true,
+            isApproved: true
+          }
+        ]
+      });
+      console.log(`⭐ Sample Verified Collector Reviews Seeded for ${mustang.name}`);
+    }
 
     console.log('\n==================================================');
     console.log('🎉 DATABASE INITIALIZATION COMPLETE!');

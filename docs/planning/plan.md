@@ -4,96 +4,71 @@
 
 ## 🛠️ 1. Project Initialization & Database Setup
 
-- [x] **1.1 Server & Tooling Setup**
-  - [x] Initialize Node.js + TypeScript project in `backend-repo`
-  - [x] Install Fastify, `@fastify/cors`, `@fastify/jwt`, `@fastify/multipart`, `@fastify/static`, `zod`, `dotenv`
-  - [x] Configure `tsconfig.json`, `tsx` for live reload
-  - [x] Setup OpenAPI / Swagger UI route (`/api/docs`)
-- [x] **1.2 PostgreSQL & Prisma ORM**
-  - [x] Configure connection string in `.env` and `docker-compose.yml` for local Docker PostgreSQL
-  - [x] Define Prisma schema models:
-    - [x] `User` (id, email, passwordHash, name, phone, role, authProvider, createdAt)
-    - [x] `Address` (id, userId, recipientName, phone, addressLine, city, area, isDefault)
-    - [x] `Category` (id, name, slug, image, displayOrder)
-    - [x] `Product` (id, name, slug, description, price, salePrice, stockQuantity, sku, scaleRatio, isActive, isFeatured, categoryId)
-    - [x] `ProductImage` (id, productId, url, altText, displayOrder, isPrimary)
-    - [x] `CartItem` (id, userId, productId, quantity, createdAt)
-    - [x] `Order` (id, orderNumber, userId, totalAmount, shippingFee, discountAmount, status, paymentMethod, paymentStatus, shippingAddress, customerPhone, adminNotes)
-    - [x] `OrderItem` (id, orderId, productId, productName, unitPrice, quantity, totalPrice)
-    - [x] `Coupon` (id, code, discountPercent, minOrderValue, maxUses, usedCount, expiresAt, isActive)
-  - [x] Generate Prisma client
-  - [x] Write seed and init scripts (`npm run db:init`) with initial categories, demo diecast products, and admin account
+- [x] **1.1 Server & Tooling Setup (Fastify 5, TypeScript, Swagger)**
+- [x] **1.2 PostgreSQL & Prisma ORM (Connected to Supabase)**
 
 ---
 
 ## 🔐 2. Authentication & Authorization Module
 
 - [x] **2.1 Token & Password Management**
-  - [x] Implement password hashing with `bcryptjs`
-  - [x] JWT Access Token generation & verification
-  - [x] Auth middleware (`authenticate`, `requireAdmin`)
-- [x] **2.2 Auth Endpoints**
-  - [x] `POST /api/v1/auth/register` (Customer registration)
-  - [x] `POST /api/v1/auth/login` (Customer login)
-  - [x] `POST /api/v1/auth/admin/login` (Admin login with role verification)
-  - [x] `POST /api/v1/auth/facebook` (Verify Facebook OAuth access token and find/create user)
-  - [x] `GET /api/v1/auth/me` (Fetch current user profile)
+- [x] **2.2 Auth Endpoints (`/register`, `/login`, `/admin/login`, `/me`, `/facebook`)**
 
 ---
 
 ## 📦 3. Products, Categories & File Upload Pipeline
 
 - [x] **3.1 Category Endpoints**
-  - [x] `GET /api/v1/categories` (Public list with product counts)
-  - [x] `POST /api/v1/admin/categories` (Admin create category)
-- [x] **3.2 Product Endpoints**
-  - [x] `GET /api/v1/products` (Public list with pagination, search, category filter, scale filter, sort)
-  - [x] `GET /api/v1/products/:identifier` (Public single product details by id or slug)
-  - [x] `POST /api/v1/products/admin` (Admin create product)
-  - [x] `PUT /api/v1/products/admin/:id` (Admin update product & prices)
-  - [x] `PATCH /api/v1/products/admin/:id/stock` (Admin quick stock update)
-  - [x] `DELETE /api/v1/products/admin/:id` (Admin remove product)
-- [x] **3.3 Image Upload & Optimization Pipeline**
-  - [x] Setup multipart file handler (`@fastify/multipart`)
-  - [x] Setup `sharp` pipeline to automatically convert uploaded images into compressed WebP format
-  - [x] `POST /api/v1/uploads` (Uploads and serves optimized images)
+- [x] **3.2 Product Endpoints (Public list, filter, admin CRUD, stock patch)**
+- [x] **3.3 Image Upload & Optimization Pipeline (Sharp WebP)**
 
 ---
 
 ## 🛒 4. Cart, Checkout & Orders Module
 
-- [x] **4.1 Cart Endpoints**
-  - [x] `GET /api/v1/cart` (Get user's server cart)
-  - [x] `POST /api/v1/cart/add` (Add item to cart)
-  - [x] `POST /api/v1/cart/merge` (Merge guest local cart with user's database cart on login)
-  - [x] `DELETE /api/v1/cart/:productId` (Remove item from cart)
-- [x] **4.2 Checkout & Order Endpoints**
-  - [x] `POST /api/v1/orders/checkout` (Validate cart, deduct stock, generate order `SSG-ORD-XXXX`, record Cash on Delivery)
-  - [x] `GET /api/v1/orders/my-orders` (Customer order history)
-- [x] **4.3 Admin Order Management**
-  - [x] `GET /api/v1/orders/admin` (Filter by status, search by phone/name/orderNumber)
-  - [x] `PATCH /api/v1/orders/admin/:id/status` (Update status: Pending ➔ Confirmed ➔ Shipped ➔ Delivered ➔ Cancelled)
-  - [x] `GET /api/v1/orders/admin/stats` (Revenue, order totals, low stock alerts)
+- [x] **4.1 Cart Endpoints (Get, add, merge, remove)**
+- [x] **4.2 Checkout & Order Endpoints (Cash on Delivery, status pipeline)**
+- [x] **4.3 Admin Order Management & KPI Stats**
 
 ---
 
 ## 🔗 5. Facebook Integrations & Webhooks
 
 - [x] **5.1 Server-Side Facebook Conversions API (CAPI)**
-  - [x] Service endpoint `POST /api/v1/facebook/events` for server-side event tracking
-- [x] **5.2 Facebook Product Catalog Feed**
-  - [x] Endpoint `GET /api/v1/facebook/catalog.xml` returning Facebook-compliant RSS/XML product feed for Facebook Commerce Manager
+- [x] **5.2 Facebook Product Catalog Feed (`/catalog.xml`)**
 
 ---
 
 ## 🧪 6. Backend Unit & Integration Testing Suite
 
-- [x] **6.1 Test Tooling Setup**
-  - [x] Install Vitest in `backend-repo`
-  - [x] Configure `vitest.config.ts` with test environment and helper factories
-- [x] **6.2 Route & Controller Unit Tests**
-  - [x] `tests/auth.test.ts`: Register, login, bad password rejection, admin role verification, JWT verification
-  - [x] `tests/products.test.ts`: Product filtering by scale (`1:18`, `1:24`, `1:64`), price sorting, admin CRUD, and stock decrement
-  - [x] `tests/categories.test.ts`: Category listing, product count aggregation, and admin creation
-  - [x] `tests/orders.test.ts`: Cash on Delivery checkout, stock deduction, order numbering, and admin KPI calculations
-  - [x] `tests/facebook.test.ts`: Dynamic XML RSS catalog format verification and CAPI event payload validation
+- [x] **6.1 Test Tooling Setup (Vitest)**
+- [x] **6.2 Route & Controller Unit Tests (14 Tests Passing)**
+
+---
+
+## 🌟 7. Dynamic Data Architecture & Management APIs
+
+- [ ] **7.1 Schema Extensions (`prisma/schema.prisma`)**
+  - [ ] `Review` Model (id, productId, userId, customerName, rating, title, comment, isVerifiedPurchase, isApproved, createdAt)
+  - [ ] `Banner` Model (id, title, subtitle, badgeText, image, link, displayOrder, isActive, createdAt)
+  - [ ] `StoreSetting` Model (key, value, description, updatedAt)
+- [ ] **7.2 Product Reviews Module (`src/routes/review.routes.ts`)**
+  - [ ] `GET /api/v1/reviews/product/:productId` (List approved reviews & computed average rating)
+  - [ ] `POST /api/v1/reviews` (Customer submit review with automatic purchase verification)
+  - [ ] `GET /api/v1/reviews/admin` (Admin list all reviews with status filters)
+  - [ ] `PATCH /api/v1/reviews/admin/:id/status` (Admin approve/reject review)
+  - [ ] `DELETE /api/v1/reviews/admin/:id` (Admin delete review)
+- [ ] **7.3 Homepage Banners Module (`src/routes/banner.routes.ts`)**
+  - [ ] `GET /api/v1/banners` (List active hero slides)
+  - [ ] `POST /api/v1/banners/admin`, `PUT /api/v1/banners/admin/:id`, `DELETE /api/v1/banners/admin/:id`
+- [ ] **7.4 Store Settings Module (`src/routes/setting.routes.ts`)**
+  - [ ] `GET /api/v1/settings` (Public store configuration: shipping fees, contact phone, announcement marquee)
+  - [ ] `PUT /api/v1/settings/admin` (Admin update store configuration)
+- [ ] **7.5 Coupons Module (`src/routes/coupon.routes.ts`)**
+  - [ ] `GET /api/v1/coupons/admin`, `POST /api/v1/coupons/admin`, `PUT /api/v1/coupons/admin/:id`, `DELETE /api/v1/coupons/admin/:id`
+  - [ ] `POST /api/v1/coupons/validate` (Public validate coupon code & compute discount)
+- [ ] **7.6 Database Seed & Migration Updates**
+  - [ ] Add initial banner slides, default store settings, and sample customer reviews into seed script
+  - [ ] Synchronize schema to Supabase via `npx prisma db push`
+- [ ] **7.7 Unit Tests for New Modules**
+  - [ ] Unit tests for Reviews, Banners, Settings, and Coupons endpoints

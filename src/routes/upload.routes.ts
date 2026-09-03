@@ -1,16 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { requireAdmin } from '../middlewares/auth.middleware.js';
 import { env } from '../config/env.js';
+import { getUploadDirectory } from '../lib/storage.js';
 
 export async function uploadRoutes(app: FastifyInstance) {
-  // Ensure upload directory exists
-  const uploadDir = path.resolve(env.UPLOAD_DIR);
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  const uploadDir = getUploadDirectory();
 
   // Admin: Upload and optimize product images
   app.post('/', { preHandler: [requireAdmin] }, async (request, reply) => {

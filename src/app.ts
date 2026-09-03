@@ -25,6 +25,7 @@ import { reviewRoutes } from './routes/review.routes.js';
 import { bannerRoutes } from './routes/banner.routes.js';
 import { settingRoutes } from './routes/setting.routes.js';
 import { couponRoutes } from './routes/coupon.routes.js';
+import { getUploadDirectory } from './lib/storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,12 +93,7 @@ export async function buildApp() {
   });
 
   // 6. Static Uploads Serving (Safe directory check for serverless environments)
-  const uploadPath = path.resolve(env.UPLOAD_DIR);
-  if (!fs.existsSync(uploadPath)) {
-    try {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    } catch (e) {}
-  }
+  const uploadPath = getUploadDirectory();
   await app.register(fastifyStatic, {
     root: uploadPath,
     prefix: '/uploads/'

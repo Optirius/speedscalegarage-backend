@@ -136,6 +136,7 @@ async function cleanSlate() {
     console.log(`   ✓ ${defaultCategories.length} Baseline Categories ready`);
 
     // Baseline Store Settings
+    const defaultSettings = [
       { key: 'shipping_dhaka', value: '60', description: 'Inside Dhaka Standard Delivery Fee (BDT)' },
       { key: 'shipping_outside_dhaka', value: '120', description: 'Outside Dhaka Delivery Fee (BDT)' },
       { key: 'free_shipping_threshold', value: '15000', description: 'Subtotal threshold for free shipping (BDT)' },

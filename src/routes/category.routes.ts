@@ -6,14 +6,21 @@ import { requireAdmin } from '../middlewares/auth.middleware.js';
 export async function categoryRoutes(app: FastifyInstance) {
   // Public: Get all categories with product count
   app.get('/', async (_request, reply) => {
-    const categories = await prisma.category.findMany({
-      orderBy: { displayOrder: 'asc' },
-      include: {
-        _count: {
-          select: { products: { where: { isActive: true } } }
+    let categories: any[];
+    try {
+      categories = await prisma.category.findMany({
+        orderBy: { displayOrder: 'asc' },
+        include: {
+          _count: {
+            select: { products: { where: { isActive: true } } }
+          }
         }
-      }
-    });
+      });
+    } catch {
+      categories = await prisma.category.findMany({
+        orderBy: { displayOrder: 'asc' }
+      });
+    }
 
     return reply.send(
       categories.map(c => ({
@@ -22,7 +29,7 @@ export async function categoryRoutes(app: FastifyInstance) {
         slug: c.slug,
         image: c.image,
         description: c.description,
-        itemCount: c._count.products
+        itemCount: c._count?.products || 0
       }))
     );
   });

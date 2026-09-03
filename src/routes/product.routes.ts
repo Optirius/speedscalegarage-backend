@@ -71,10 +71,10 @@ export async function productRoutes(app: FastifyInstance) {
         sku: p.sku,
         scaleRatio: p.scaleRatio,
         isFeatured: p.isFeatured,
-        category: p.category.slug,
-        categoryName: p.category.name,
-        image: p.images.find(img => img.isPrimary)?.url || p.images[0]?.url || '',
-        images: p.images.map(img => img.url)
+        category: p.category?.slug || '',
+        categoryName: p.category?.name || '',
+        image: p.images?.find(img => img.isPrimary)?.url || p.images?.[0]?.url || '',
+        images: p.images?.map(img => img.url) || []
       })),
       pagination: {
         page: query.page,

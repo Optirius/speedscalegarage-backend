@@ -136,7 +136,6 @@ describe('🛡️ Comprehensive Security, Auth Guard & Access Control Tests', ()
         authorization: `Bearer ${otherCustomerToken}`
       }
     });
-
     expect(unauthorizedAttempt.statusCode).toBe(403);
 
     // Customer 1 views own order -> 200 OK

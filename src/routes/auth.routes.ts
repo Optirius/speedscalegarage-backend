@@ -59,6 +59,10 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid email or password.' });
     }
 
+    if (user.isActive === false) {
+      return reply.status(403).send({ error: 'Your account has been suspended or disabled. Please contact customer support.' });
+    }
+
     const validPassword = await bcrypt.compare(body.password, user.passwordHash);
     if (!validPassword) {
       return reply.status(401).send({ error: 'Invalid email or password.' });
@@ -67,7 +71,7 @@ export async function authRoutes(app: FastifyInstance) {
     const token = app.jwt.sign({ userId: user.id, email: user.email, role: user.role }, { expiresIn: '7d' });
 
     return reply.send({
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, addresses: user.addresses },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, phone: user.phone, isActive: user.isActive, addresses: user.addresses },
       token
     });
   });
@@ -89,6 +93,10 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Invalid admin credentials or insufficient privileges.' });
     }
 
+    if (admin.isActive === false) {
+      return reply.status(403).send({ error: 'This administrative account has been deactivated.' });
+    }
+
     const valid = await bcrypt.compare(body.password, admin.passwordHash);
     if (!valid) {
       return reply.status(401).send({ error: 'Invalid admin credentials.' });
@@ -97,7 +105,7 @@ export async function authRoutes(app: FastifyInstance) {
     const token = app.jwt.sign({ userId: admin.id, email: admin.email, role: 'ADMIN' }, { expiresIn: '24h' });
 
     return reply.send({
-      user: { id: admin.id, email: admin.email, name: admin.name, role: 'ADMIN' },
+      user: { id: admin.id, email: admin.email, name: admin.name, role: 'ADMIN', isActive: admin.isActive },
       token
     });
   });
@@ -114,12 +122,17 @@ export async function authRoutes(app: FastifyInstance) {
     const email = body.email || `fb_${body.fbUserId}@speedscalegarage.com`;
 
     let user = await prisma.user.findUnique({ where: { email } });
+    if (user && user.isActive === false) {
+      return reply.status(403).send({ error: 'Your account has been suspended or disabled. Please contact customer support.' });
+    }
+
     if (!user) {
       user = await prisma.user.create({
         data: {
           email,
           name: body.name,
           role: 'CUSTOMER',
+          isActive: true,
           authProvider: 'FACEBOOK'
         }
       });
@@ -128,7 +141,7 @@ export async function authRoutes(app: FastifyInstance) {
     const token = app.jwt.sign({ userId: user.id, email: user.email, role: user.role }, { expiresIn: '7d' });
 
     return reply.send({
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, isActive: user.isActive },
       token
     });
   });
@@ -149,6 +162,7 @@ export async function authRoutes(app: FastifyInstance) {
         name: user.name,
         phone: user.phone,
         role: user.role,
+        isActive: user.isActive,
         addresses: user.addresses
       }
     });

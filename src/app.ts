@@ -25,6 +25,7 @@ import { reviewRoutes } from './routes/review.routes.js';
 import { bannerRoutes } from './routes/banner.routes.js';
 import { settingRoutes } from './routes/setting.routes.js';
 import { couponRoutes } from './routes/coupon.routes.js';
+import { userRoutes } from './routes/user.routes.js';
 import { getUploadDirectory } from './lib/storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -144,6 +145,7 @@ export async function buildApp() {
   await app.register(bannerRoutes, { prefix: '/api/v1/banners' });
   await app.register(settingRoutes, { prefix: '/api/v1/settings' });
   await app.register(couponRoutes, { prefix: '/api/v1/coupons' });
+  await app.register(userRoutes, { prefix: '/api/v1/users' });
 
   // 10. Robust Error Handler (Shielding Database and System Details)
   app.setErrorHandler((error: FastifyError | Error | any, _request, reply) => {

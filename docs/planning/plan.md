@@ -89,28 +89,28 @@
 
 ## 👥 9. User Management & Customer 360 Module (`/api/v1/users/admin`)
 
-- [ ] **9.1 Schema & Database Updates (`prisma/schema.prisma`)**
-  - [ ] Add `isActive Boolean @default(true)` to `User` model
-  - [ ] Run `npx prisma db push` and `npx prisma generate`
-  - [ ] Update `tests/setup.ts` in-memory Prismock seed fixtures with `isActive: true`
-- [ ] **9.2 Auth & Security Guard Enforcement**
-  - [ ] Enforce `isActive` check in `/auth/login` and `/auth/facebook` (return 403 if disabled)
-  - [ ] Enforce `isActive` check in `authenticate` middleware (`src/middlewares/auth.middleware.ts`)
-- [ ] **9.3 Admin User Management Endpoints (`src/routes/user.routes.ts`)**
-  - [ ] `GET /api/v1/users/admin`: Paginated customer list with query, role, and status filters, including cart item counts, order counts, and total spend
-  - [ ] `GET /api/v1/users/admin/:id`: Customer 360 detail endpoint returning full profile, live cart items (with product images, variants, unit prices, line totals), orders history, saved addresses, and reviews
-  - [ ] `PATCH /api/v1/users/admin/:id/status`: Toggle active status (`{ isActive: boolean }`)
-  - [ ] `PATCH /api/v1/users/admin/:id/role`: Change role (`{ role: 'ADMIN' | 'CUSTOMER' }`)
-  - [ ] `DELETE /api/v1/users/admin/:id`: Delete customer account with cascading relations
-- [ ] **9.4 Self-Protection Guardrails**
-  - [ ] Prevent admin from disabling their own account
-  - [ ] Prevent admin from demoting their own account
-  - [ ] Prevent disabling or demoting the last remaining active admin
-- [ ] **9.5 Register Router in Fastify Engine (`src/app.ts`)**
-  - [ ] Register `userRoutes` under prefix `/api/v1/users`
-- [ ] **9.6 Backend Unit & Integration Tests (`tests/user.test.ts`)**
-  - [ ] Test admin listing users with search, role, and status filters
-  - [ ] Test Customer 360 detail endpoint with live cart items inspection
-  - [ ] Test enabling and disabling user accounts
-  - [ ] Test role promotion and demotion
-  - [ ] Test self-protection rules (self-demotion / self-disabling blocked)
+- [x] **9.1 Schema & Database Updates (`prisma/schema.prisma`)**
+  - [x] Add `isActive Boolean @default(true)` to `User` model
+  - [x] Run `npx prisma db push` and `npx prisma generate`
+  - [x] Update `tests/setup.ts` in-memory Prismock seed fixtures with `isActive: true`
+- [x] **9.2 Auth & Security Guard Enforcement**
+  - [x] Enforce `isActive` check in `/auth/login` and `/auth/facebook` (return 403 if disabled)
+  - [x] Enforce `isActive` check in `authenticate` middleware (`src/middlewares/auth.middleware.ts`)
+- [x] **9.3 Admin User Management Endpoints (`src/routes/user.routes.ts`)**
+  - [x] `GET /api/v1/users/admin`: Paginated customer list with query, role, and status filters, including cart item counts, order counts, and total spend
+  - [x] `GET /api/v1/users/admin/:id`: Customer 360 detail endpoint returning full profile, live cart items (with product images, variants, unit prices, line totals), orders history, saved addresses, and reviews
+  - [x] `PATCH /api/v1/users/admin/:id/status`: Toggle active status (`{ isActive: boolean }`)
+  - [x] `PATCH /api/v1/users/admin/:id/role`: Change role (`{ role: 'ADMIN' | 'CUSTOMER' }`)
+  - [x] `DELETE /api/v1/users/admin/:id`: Delete customer account with cascading relations
+- [x] **9.4 Self-Protection Guardrails**
+  - [x] Prevent admin from disabling their own account
+  - [x] Prevent admin from demoting their own account
+  - [x] Prevent disabling or demoting the last remaining active admin
+- [x] **9.5 Register Router in Fastify Engine (`src/app.ts`)**
+  - [x] Register `userRoutes` under prefix `/api/v1/users`
+- [x] **9.6 Backend Unit & Integration Tests (`tests/user.test.ts`)**
+  - [x] Test admin listing users with search, role, and status filters
+  - [x] Test Customer 360 detail endpoint with live cart items inspection
+  - [x] Test enabling and disabling user accounts
+  - [x] Test role promotion and demotion
+  - [x] Test self-protection rules (self-demotion / self-disabling blocked)

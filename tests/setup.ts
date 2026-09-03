@@ -29,13 +29,14 @@ export async function seedInMemoryDatabase() {
   const adminPasswordHash = await bcrypt.hash('speedscale123', 10);
   await (prismock as any).user.upsert({
     where: { email: 'admin@speedscalegarage.com' },
-    update: { role: 'ADMIN' },
+    update: { role: 'ADMIN', isActive: true },
     create: {
       id: 'a0000000-0000-4000-8000-000000000001',
       email: 'admin@speedscalegarage.com',
       name: 'SpeedScale Admin',
       passwordHash: adminPasswordHash,
       role: 'ADMIN',
+      isActive: true,
       authProvider: 'LOCAL'
     }
   });

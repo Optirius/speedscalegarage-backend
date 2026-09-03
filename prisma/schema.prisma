@@ -54,6 +54,7 @@ model User {
   name         String
   phone        String?
   role         Role         @default(CUSTOMER)
+  isActive     Boolean      @default(true)
   authProvider AuthProvider @default(LOCAL)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

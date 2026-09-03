@@ -24,11 +24,15 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     // Database existence verification
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, role: true }
+      select: { id: true, email: true, role: true, isActive: true }
     });
 
     if (!user) {
       return reply.status(401).send({ error: 'Unauthorized. User account no longer exists.' });
+    }
+
+    if (user.isActive === false) {
+      return reply.status(403).send({ error: 'Forbidden. Your account has been suspended or disabled.' });
     }
 
     request.user = {
@@ -51,10 +55,10 @@ export async function requireAdmin(request: FastifyRequest, reply: FastifyReply)
     // Live database role verification prevents token forgery & revocation bypass
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, role: true }
+      select: { id: true, email: true, role: true, isActive: true }
     });
 
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || user.role !== 'ADMIN' || user.isActive === false) {
       return reply.status(403).send({ error: 'Forbidden. Active administrator privileges required.' });
     }
 

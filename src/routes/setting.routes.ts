@@ -30,16 +30,17 @@ export async function settingRoutes(app: FastifyInstance) {
   });
 
   // 2. Admin: Update settings in bulk or individually
-  const updateSettingsSchema = z.record(z.string());
+  const updateSettingsSchema = z.record(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 
   app.put('/admin', { preHandler: [requireAdmin] }, async (request, reply) => {
     const body = updateSettingsSchema.parse(request.body);
 
     for (const [key, value] of Object.entries(body)) {
+      const stringVal = value === null || value === undefined ? '' : String(value);
       await prisma.storeSetting.upsert({
         where: { key },
-        update: { value: String(value) },
-        create: { key, value: String(value) }
+        update: { value: stringVal },
+        create: { key, value: stringVal }
       });
     }
 

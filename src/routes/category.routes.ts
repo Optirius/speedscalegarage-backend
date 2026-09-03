@@ -52,4 +52,45 @@ export async function categoryRoutes(app: FastifyInstance) {
 
     return reply.status(201).send(category);
   });
+
+  // Admin: Update Category
+  app.put('/admin/:id', { preHandler: [requireAdmin] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const schema = z.object({
+      name: z.string().min(2).optional(),
+      slug: z.string().optional(),
+      image: z.string().url().optional(),
+      description: z.string().optional(),
+      displayOrder: z.number().optional()
+    });
+
+    const body = schema.parse(request.body);
+    const category = await prisma.category.update({
+      where: { id },
+      data: body
+    });
+
+    return reply.send(category);
+  });
+
+  // Admin: Delete Category
+  app.delete('/admin/:id', { preHandler: [requireAdmin] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const productCount = await prisma.product.count({
+      where: { categoryId: id }
+    });
+
+    if (productCount > 0) {
+      return reply.status(400).send({
+        error: `Cannot delete category because ${productCount} product(s) are currently assigned to it. Please reassign or delete them first.`
+      });
+    }
+
+    await prisma.category.delete({
+      where: { id }
+    });
+
+    return reply.send({ success: true, message: 'Category removed successfully.' });
+  });
 }

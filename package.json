@@ -13,6 +13,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
     "db:init": "tsx scripts/init-db.ts",
+    "db:clean-slate": "tsx scripts/clean-slate.ts",
     "test": "vitest run"
   },
   "dependencies": {

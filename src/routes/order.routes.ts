@@ -107,7 +107,7 @@ export async function orderRoutes(app: FastifyInstance) {
       }
 
       const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount);
-      const orderNumber = `SSG-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderNumber = `SSG-ORD-${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}`;
 
       return tx.order.create({
         data: {

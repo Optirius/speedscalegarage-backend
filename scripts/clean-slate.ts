@@ -136,10 +136,15 @@ async function cleanSlate() {
     console.log(`   ✓ ${defaultCategories.length} Baseline Categories ready`);
 
     // Baseline Store Settings
-    const defaultSettings = [
       { key: 'shipping_dhaka', value: '60', description: 'Inside Dhaka Standard Delivery Fee (BDT)' },
       { key: 'shipping_outside_dhaka', value: '120', description: 'Outside Dhaka Delivery Fee (BDT)' },
       { key: 'free_shipping_threshold', value: '15000', description: 'Subtotal threshold for free shipping (BDT)' },
+      { key: 'admin_notification_email', value: 'admin@speedscalegarage.com', description: 'Email address where order notifications and bKash TrxID alerts are sent' },
+      { key: 'bkash_number', value: '01700000000', description: 'bKash Wallet Number for Send Money' },
+      { key: 'bkash_account_type', value: 'Personal', description: 'bKash Account Type (Personal / Merchant / Agent)' },
+      { key: 'bkash_instructions', value: 'Please Send Money to the bKash number and enter your Sender Phone number & Transaction ID (TrxID) below.', description: 'bKash customer instructions' },
+      { key: 'cod_enabled', value: 'true', description: 'Enable Cash on Delivery' },
+      { key: 'bkash_enabled', value: 'true', description: 'Enable bKash Send Money' },
       { key: 'announcement_text', value: '⚡ Free Express Delivery on all Scale Model orders over ৳15,000 | 100% Authentic Diecast Collector Garage', description: 'Header announcement marquee' },
       { key: 'announcement_active', value: 'true', description: 'Toggle top announcement bar' },
       { key: 'contact_phone', value: '+880 1700-000000', description: 'Store direct call line' },

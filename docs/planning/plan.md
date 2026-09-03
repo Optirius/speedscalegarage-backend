@@ -48,27 +48,39 @@
 
 ## 🌟 7. Dynamic Data Architecture & Management APIs
 
-- [ ] **7.1 Schema Extensions (`prisma/schema.prisma`)**
-  - [ ] `Review` Model (id, productId, userId, customerName, rating, title, comment, isVerifiedPurchase, isApproved, createdAt)
-  - [ ] `Banner` Model (id, title, subtitle, badgeText, image, link, displayOrder, isActive, createdAt)
-  - [ ] `StoreSetting` Model (key, value, description, updatedAt)
-- [ ] **7.2 Product Reviews Module (`src/routes/review.routes.ts`)**
-  - [ ] `GET /api/v1/reviews/product/:productId` (List approved reviews & computed average rating)
-  - [ ] `POST /api/v1/reviews` (Customer submit review with automatic purchase verification)
-  - [ ] `GET /api/v1/reviews/admin` (Admin list all reviews with status filters)
-  - [ ] `PATCH /api/v1/reviews/admin/:id/status` (Admin approve/reject review)
-  - [ ] `DELETE /api/v1/reviews/admin/:id` (Admin delete review)
-- [ ] **7.3 Homepage Banners Module (`src/routes/banner.routes.ts`)**
-  - [ ] `GET /api/v1/banners` (List active hero slides)
-  - [ ] `POST /api/v1/banners/admin`, `PUT /api/v1/banners/admin/:id`, `DELETE /api/v1/banners/admin/:id`
-- [ ] **7.4 Store Settings Module (`src/routes/setting.routes.ts`)**
-  - [ ] `GET /api/v1/settings` (Public store configuration: shipping fees, contact phone, announcement marquee)
-  - [ ] `PUT /api/v1/settings/admin` (Admin update store configuration)
-- [ ] **7.5 Coupons Module (`src/routes/coupon.routes.ts`)**
-  - [ ] `GET /api/v1/coupons/admin`, `POST /api/v1/coupons/admin`, `PUT /api/v1/coupons/admin/:id`, `DELETE /api/v1/coupons/admin/:id`
-  - [ ] `POST /api/v1/coupons/validate` (Public validate coupon code & compute discount)
-- [ ] **7.6 Database Seed & Migration Updates**
-  - [ ] Add initial banner slides, default store settings, and sample customer reviews into seed script
-  - [ ] Synchronize schema to Supabase via `npx prisma db push`
-- [ ] **7.7 Unit Tests for New Modules**
-  - [ ] Unit tests for Reviews, Banners, Settings, and Coupons endpoints
+- [x] **7.1 Schema Extensions (`prisma/schema.prisma`)**
+- [x] **7.2 Product Reviews Module (`src/routes/review.routes.ts`)**
+- [x] **7.3 Homepage Banners Module (`src/routes/banner.routes.ts`)**
+- [x] **7.4 Store Settings Module (`src/routes/setting.routes.ts`)**
+- [x] **7.5 Coupons Module (`src/routes/coupon.routes.ts`)**
+- [x] **7.6 Database Seed & Migration Updates**
+- [x] **7.7 Unit Tests for New Modules (26/26 passing)**
+
+---
+
+## 💳 8. Payment System & Email Notification Module (COD & bKash)
+
+- [ ] **8.1 Schema & Database Updates (`prisma/schema.prisma`)**
+  - [ ] Add `paymentSenderNumber` (String?), `paymentTrxId` (String?), `paymentNotes` (String?) to `Order` model
+  - [ ] Push schema to Supabase with `npx prisma db push` and regenerate Prisma client
+- [ ] **8.2 Transactional Email Notification Service (`src/services/email.service.ts`)**
+  - [ ] Install `nodemailer` and `@types/nodemailer`
+  - [ ] Configure dynamic SMTP transport (via StoreSettings or `.env` fallback)
+  - [ ] Build responsive HTML email template for **Admin Order & bKash Verification Alert**
+  - [ ] Build responsive HTML email template for **Customer Order Receipt & Confirmation**
+- [ ] **8.3 Checkout & Order Processing API Enhancements (`src/routes/order.routes.ts`)**
+  - [ ] Support `paymentMethod: 'COD' | 'BKASH'` in `POST /api/v1/orders/checkout`
+  - [ ] Validate bKash fields (`paymentSenderNumber`, `paymentTrxId`) when `paymentMethod === 'BKASH'`
+  - [ ] Save payment details atomically in database transaction
+  - [ ] Dispatch background email notification to admin notification email configured in StoreSettings
+  - [ ] Add Admin Payment Status update endpoint `PATCH /api/v1/orders/admin/:id/payment`
+- [ ] **8.4 Store Settings Keys for Payments & Notifications (`src/routes/setting.routes.ts`)**
+  - [ ] `admin_notification_email` (Destination for order & TrxID alerts)
+  - [ ] `bkash_number` (bKash Wallet Phone Number for Send Money)
+  - [ ] `bkash_account_type` (Personal / Merchant / Agent)
+  - [ ] `bkash_instructions` (Customer instructions text)
+  - [ ] `cod_enabled` & `bkash_enabled` toggles
+- [ ] **8.5 Backend Unit & Integration Tests (`tests/payment-and-orders.test.ts`)**
+  - [ ] Test COD order creation & email trigger
+  - [ ] Test bKash order creation with sender number and TrxID validation
+  - [ ] Test admin payment verification endpoint

@@ -9,6 +9,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { z } from 'zod';
 import { env } from './config/env.js';
 
 // Route imports
@@ -113,7 +114,7 @@ export async function buildApp() {
   // 10. Robust Error Handler (Shielding Database and System Details)
   app.setErrorHandler((error: FastifyError | Error | any, _request, reply) => {
     app.log.error(error);
-    if (error.name === 'ZodError') {
+    if (error instanceof z.ZodError || error.name === 'ZodError' || (error.issues && Array.isArray(error.issues))) {
       return reply.status(400).send({
         statusCode: 400,
         error: 'Validation Error',

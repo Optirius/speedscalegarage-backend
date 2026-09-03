@@ -2,9 +2,10 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authenticate, requireAdmin } from '../middlewares/auth.middleware.js';
+import { sendAdminOrderAlert, sendCustomerOrderReceipt } from '../services/email.service.js';
 
 export async function orderRoutes(app: FastifyInstance) {
-  // 1. Place Order (Cash on Delivery)
+  // 1. Place Order (Cash on Delivery & bKash Send Money)
   app.post('/checkout', async (request, reply) => {
     const schema = z.object({
       customerName: z.string().min(2),
@@ -15,6 +16,9 @@ export async function orderRoutes(app: FastifyInstance) {
       city: z.string().min(2),
       notes: z.string().optional(),
       couponCode: z.string().optional(),
+      paymentMethod: z.enum(['COD', 'BKASH']).default('COD'),
+      paymentSenderNumber: z.string().optional(),
+      paymentTrxId: z.string().optional(),
       items: z.array(z.object({
         productId: z.string(),
         quantity: z.number().int().positive()
@@ -22,6 +26,24 @@ export async function orderRoutes(app: FastifyInstance) {
     });
 
     const body = schema.parse(request.body);
+
+    // Validate bKash specific fields if BKASH is chosen
+    if (body.paymentMethod === 'BKASH') {
+      if (!body.paymentSenderNumber || body.paymentSenderNumber.trim().length < 10) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Validation Error',
+          message: 'bKash Sender Phone Number is required for bKash payment.'
+        });
+      }
+      if (!body.paymentTrxId || body.paymentTrxId.trim().length < 6) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Validation Error',
+          message: 'bKash Transaction ID (TrxID) is required for bKash payment.'
+        });
+      }
+    }
 
     // Optional user from JWT if token is provided in headers
     let authUserId: string | undefined;
@@ -125,14 +147,24 @@ export async function orderRoutes(app: FastifyInstance) {
           discountAmount,
           totalAmount,
           status: 'PENDING',
-          paymentMethod: 'COD',
+          paymentMethod: body.paymentMethod,
           paymentStatus: 'PENDING',
+          paymentSenderNumber: body.paymentMethod === 'BKASH' ? body.paymentSenderNumber?.trim() : null,
+          paymentTrxId: body.paymentMethod === 'BKASH' ? body.paymentTrxId?.trim().toUpperCase() : null,
           items: {
             create: orderItemsData
           }
         },
         include: { items: true }
       });
+    });
+
+    // 5. Asynchronous Email Dispatch (non-blocking)
+    setImmediate(async () => {
+      await Promise.allSettled([
+        sendAdminOrderAlert(order),
+        sendCustomerOrderReceipt(order)
+      ]);
     });
 
     return reply.status(201).send(order);
@@ -174,6 +206,8 @@ export async function orderRoutes(app: FastifyInstance) {
   app.get('/admin', { preHandler: [requireAdmin] }, async (request, reply) => {
     const schema = z.object({
       status: z.string().optional(),
+      paymentStatus: z.string().optional(),
+      paymentMethod: z.string().optional(),
       q: z.string().optional(),
       page: z.string().optional().transform(v => (v ? parseInt(v) : 1)),
       limit: z.string().optional().transform(v => (v ? parseInt(v) : 30))
@@ -186,11 +220,20 @@ export async function orderRoutes(app: FastifyInstance) {
       where.status = query.status;
     }
 
+    if (query.paymentStatus && query.paymentStatus !== 'ALL') {
+      where.paymentStatus = query.paymentStatus;
+    }
+
+    if (query.paymentMethod && query.paymentMethod !== 'ALL') {
+      where.paymentMethod = query.paymentMethod;
+    }
+
     if (query.q) {
       where.OR = [
         { orderNumber: { contains: query.q, mode: 'insensitive' } },
         { customerName: { contains: query.q, mode: 'insensitive' } },
-        { customerPhone: { contains: query.q, mode: 'insensitive' } }
+        { customerPhone: { contains: query.q, mode: 'insensitive' } },
+        { paymentTrxId: { contains: query.q, mode: 'insensitive' } }
       ];
     }
 
@@ -231,7 +274,30 @@ export async function orderRoutes(app: FastifyInstance) {
     return reply.send(updated);
   });
 
-  // 6. Admin: Dashboard Stats
+  // 6. Admin: Verify / Update Payment Status (bKash TrxID Verification & COD Reconciliation)
+  app.patch('/admin/:id/payment', { preHandler: [requireAdmin] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const schema = z.object({
+      paymentStatus: z.enum(['PENDING', 'PAID', 'FAILED']),
+      adminNotes: z.string().optional()
+    });
+
+    const { paymentStatus, adminNotes } = schema.parse(request.body);
+
+    const updated = await prisma.order.update({
+      where: { id },
+      data: {
+        paymentStatus,
+        status: paymentStatus === 'PAID' ? 'CONFIRMED' : undefined,
+        adminNotes
+      },
+      include: { items: true }
+    });
+
+    return reply.send(updated);
+  });
+
+  // 7. Admin: Dashboard Stats
   app.get('/admin/stats', { preHandler: [requireAdmin] }, async (_request, reply) => {
     const [totalRevenueResult, totalOrders, pendingCount, shippedCount, deliveredCount, lowStockCount] = await Promise.all([
       prisma.order.aggregate({

@@ -8,10 +8,10 @@ export async function authRoutes(app: FastifyInstance) {
   // 1. Customer Registration
   app.post('/register', async (request, reply) => {
     const schema = z.object({
-      email: z.string().email(),
-      password: z.string().min(6),
-      name: z.string().min(2),
-      phone: z.string().optional()
+      email: z.string().trim().toLowerCase().email(),
+      password: z.string().min(6, 'Password must be at least 6 characters'),
+      name: z.string().trim().min(2, 'Name must be at least 2 characters'),
+      phone: z.string().optional().nullable().transform(p => p && p.trim() ? p.trim() : undefined)
     });
 
     const body = schema.parse(request.body);
@@ -44,7 +44,7 @@ export async function authRoutes(app: FastifyInstance) {
   // 2. Customer Login
   app.post('/login', async (request, reply) => {
     const schema = z.object({
-      email: z.string().email(),
+      email: z.string().trim().toLowerCase().email(),
       password: z.string()
     });
 
@@ -75,7 +75,7 @@ export async function authRoutes(app: FastifyInstance) {
   // 3. Admin Login
   app.post('/admin/login', async (request, reply) => {
     const schema = z.object({
-      email: z.string().email(),
+      email: z.string().trim().toLowerCase().email(),
       password: z.string()
     });
 

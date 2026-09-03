@@ -16,4 +16,13 @@ const envSchema = z.object({
   FB_ACCESS_TOKEN: z.string().optional(),
 });
 
-export const env = envSchema.parse(process.env);
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  const missing = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+  console.error(`❌ [ENVIRONMENT CONFIG ERROR] Invalid or missing environment variables: ${missing}`);
+  console.error(`👉 If deploying on Vercel, ensure you have added DATABASE_URL in Vercel Project Settings ➔ Environment Variables.`);
+  throw new Error(`Environment validation failed: ${missing}`);
+}
+
+export const env = parsed.data;

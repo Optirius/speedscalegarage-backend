@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { prisma } from '../lib/prisma.js';
 
 export interface TokenPayload {
   userId: string;
@@ -13,32 +14,68 @@ declare module '@fastify/jwt' {
   }
 }
 
+/**
+ * Verifies JWT token and checks if user exists in database
+ */
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
     const payload = await request.jwtVerify<TokenPayload>();
-    request.user = payload;
+    
+    // Database existence verification
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, role: true }
+    });
+
+    if (!user) {
+      return reply.status(401).send({ error: 'Unauthorized. User account no longer exists.' });
+    }
+
+    request.user = {
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    };
   } catch (err) {
     return reply.status(401).send({ error: 'Unauthorized. Invalid or expired token.' });
   }
 }
 
+/**
+ * Verifies JWT token and guarantees active ADMIN role in the database
+ */
 export async function requireAdmin(request: FastifyRequest, reply: FastifyReply) {
   try {
     const payload = await request.jwtVerify<TokenPayload>();
-    request.user = payload;
-    if (payload.role !== 'ADMIN') {
-      return reply.status(403).send({ error: 'Forbidden. Admin privileges required.' });
+
+    // Live database role verification prevents token forgery & revocation bypass
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return reply.status(403).send({ error: 'Forbidden. Active administrator privileges required.' });
     }
+
+    request.user = {
+      userId: user.id,
+      email: user.email,
+      role: 'ADMIN'
+    };
   } catch (err) {
-    return reply.status(401).send({ error: 'Unauthorized. Admin session required.' });
+    return reply.status(401).send({ error: 'Unauthorized. Administrator authentication required.' });
   }
 }
 
+/**
+ * Optionally extracts user payload if a valid token is provided
+ */
 export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply) {
   try {
     const payload = await request.jwtVerify<TokenPayload>();
     request.user = payload;
   } catch (err) {
-    // Optional auth - continues unauthenticated
+    // Optional auth - proceeds unauthenticated
   }
 }

@@ -33,7 +33,18 @@ export async function orderRoutes(app: FastifyInstance) {
     }
 
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Fetch products & compute subtotal
+      // 1. Fetch store settings for shipping rules
+      const settings = await tx.storeSetting.findMany();
+      const settingsMap = settings.reduce((acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      }, {} as Record<string, string>);
+
+      const shippingDhaka = Number(settingsMap['shipping_dhaka'] || 60);
+      const shippingOutside = Number(settingsMap['shipping_outside_dhaka'] || 120);
+      const freeThreshold = Number(settingsMap['free_shipping_threshold'] || 15000);
+
+      // 2. Fetch products & compute subtotal with inventory lock
       let subtotal = 0;
       const orderItemsData: any[] = [];
 
@@ -43,8 +54,8 @@ export async function orderRoutes(app: FastifyInstance) {
           include: { images: true }
         });
 
-        if (!prod) {
-          throw new Error(`Product with ID ${item.productId} not found.`);
+        if (!prod || !prod.isActive) {
+          throw new Error(`Product with ID ${item.productId} is not available.`);
         }
 
         if (prod.stock < item.quantity) {
@@ -65,26 +76,33 @@ export async function orderRoutes(app: FastifyInstance) {
           scaleRatio: prod.scaleRatio
         });
 
-        // Deduct inventory stock
+        // Atomic inventory deduction
         await tx.product.update({
           where: { id: prod.id },
           data: { stock: { decrement: item.quantity } }
         });
       }
 
-      // 2. Shipping fee logic
-      const shippingFee = subtotal >= 15000 ? 0 : (body.deliveryArea === 'INSIDE_DHAKA' ? 60 : 120);
+      // 3. Shipping fee computation
+      const shippingFee = subtotal >= freeThreshold ? 0 : (body.deliveryArea === 'INSIDE_DHAKA' ? shippingDhaka : shippingOutside);
 
-      // 3. Discount calculation
+      // 4. Secure Coupon Validation & Redemption
       let discountAmount = 0;
       if (body.couponCode) {
         const coupon = await tx.coupon.findUnique({ where: { code: body.couponCode.toUpperCase() } });
         if (coupon && coupon.isActive) {
-          discountAmount = Math.round(subtotal * (coupon.discountPercent / 100));
-          await tx.coupon.update({
-            where: { id: coupon.id },
-            data: { usedCount: { increment: 1 } }
-          });
+          const now = new Date();
+          const isExpired = coupon.expiresAt && new Date(coupon.expiresAt) < now;
+          const meetsMinSpend = !coupon.minOrderValue || subtotal >= Number(coupon.minOrderValue);
+          const hasUsesLeft = coupon.maxUses === null || coupon.usedCount < coupon.maxUses;
+
+          if (!isExpired && meetsMinSpend && hasUsesLeft) {
+            discountAmount = Math.round(subtotal * (coupon.discountPercent / 100));
+            await tx.coupon.update({
+              where: { id: coupon.id },
+              data: { usedCount: { increment: 1 } }
+            });
+          }
         }
       }
 
@@ -130,7 +148,29 @@ export async function orderRoutes(app: FastifyInstance) {
     return reply.send(orders);
   });
 
-  // 3. Admin: Get All Orders with Status Filter & Search
+  // 3. Customer / Admin: Get Specific Order (Anti-IDOR Protection)
+  app.get('/:id', { preHandler: [authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const user = request.user!;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true }
+    });
+
+    if (!order) {
+      return reply.status(404).send({ error: 'Order not found.' });
+    }
+
+    // IDOR Check: user must own order OR be an ADMIN
+    if (order.userId !== user.userId && user.role !== 'ADMIN') {
+      return reply.status(403).send({ error: 'Forbidden. You cannot view this order.' });
+    }
+
+    return reply.send(order);
+  });
+
+  // 4. Admin: Get All Orders with Status Filter & Search
   app.get('/admin', { preHandler: [requireAdmin] }, async (request, reply) => {
     const schema = z.object({
       status: z.string().optional(),
@@ -168,7 +208,7 @@ export async function orderRoutes(app: FastifyInstance) {
     return reply.send({ orders, total, page: query.page });
   });
 
-  // 4. Admin: Update Order Pipeline Status
+  // 5. Admin: Update Order Pipeline Status
   app.patch('/admin/:id/status', { preHandler: [requireAdmin] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const schema = z.object({
@@ -191,7 +231,7 @@ export async function orderRoutes(app: FastifyInstance) {
     return reply.send(updated);
   });
 
-  // 5. Admin: Dashboard Stats
+  // 6. Admin: Dashboard Stats
   app.get('/admin/stats', { preHandler: [requireAdmin] }, async (_request, reply) => {
     const [totalRevenueResult, totalOrders, pendingCount, shippedCount, deliveredCount, lowStockCount] = await Promise.all([
       prisma.order.aggregate({

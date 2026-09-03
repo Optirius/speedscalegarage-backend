@@ -1,5 +1,7 @@
 import fastify, { FastifyError } from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
@@ -27,34 +29,53 @@ const __dirname = path.dirname(__filename);
 
 export async function buildApp() {
   const app = fastify({
-    logger: env.NODE_ENV === 'development'
+    logger: env.NODE_ENV === 'development',
+    trustProxy: true
   });
 
-  // 1. CORS
+  // 1. HTTP Security Headers (Helmet)
+  await app.register(helmet, {
+    contentSecurityPolicy: false, // Allows flexible asset loading while keeping X-Frame, X-Content-Type, X-XSS protection
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  });
+
+  // 2. Rate Limiting (DDoS & Brute Force Mitigation)
+  await app.register(rateLimit, {
+    max: 120, // 120 requests per minute globally per IP
+    timeWindow: '1 minute',
+    errorResponseBuilder: () => ({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Please wait a moment before trying again.'
+    })
+  });
+
+  // 3. CORS
   await app.register(cors, {
     origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   });
 
-  // 2. JWT Plugin
+  // 4. JWT Plugin
   await app.register(jwt, {
     secret: env.JWT_SECRET
   });
 
-  // 3. Multipart Uploads
+  // 5. Multipart Uploads with file size boundary
   await app.register(multipart, {
     limits: {
       fileSize: 10 * 1024 * 1024 // 10MB
     }
   });
 
-  // 4. Static Uploads Serving
+  // 6. Static Uploads Serving
   await app.register(fastifyStatic, {
     root: path.resolve(env.UPLOAD_DIR),
     prefix: '/uploads/'
   });
 
-  // 5. Swagger Documentation
+  // 7. Swagger Documentation
   await app.register(swagger, {
     openapi: {
       info: {
@@ -69,14 +90,14 @@ export async function buildApp() {
     routePrefix: '/api/docs'
   });
 
-  // 6. Health Check
+  // 8. Health Check
   app.get('/health', async () => ({
     status: 'online',
     timestamp: new Date().toISOString(),
     service: 'speedscale-api'
   }));
 
-  // 7. API Routes Registration
+  // 9. API Routes Registration
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(productRoutes, { prefix: '/api/v1/products' });
   await app.register(categoryRoutes, { prefix: '/api/v1/categories' });
@@ -89,7 +110,7 @@ export async function buildApp() {
   await app.register(settingRoutes, { prefix: '/api/v1/settings' });
   await app.register(couponRoutes, { prefix: '/api/v1/coupons' });
 
-  // 8. Error Handler
+  // 10. Robust Error Handler (Shielding Database and System Details)
   app.setErrorHandler((error: FastifyError | Error | any, _request, reply) => {
     app.log.error(error);
     if (error.name === 'ZodError') {
@@ -101,7 +122,7 @@ export async function buildApp() {
       });
     }
 
-    // Handle Database Connection Errors gracefully
+    // Handle Database Connection Errors gracefully without stack exposure
     if (
       error.code === 'P1001' || 
       (typeof error.message === 'string' && error.message.includes("Can't reach database server"))
@@ -109,15 +130,21 @@ export async function buildApp() {
       return reply.status(503).send({
         statusCode: 503,
         error: 'Service Unavailable',
-        message: 'Database server is unreachable. Please ensure PostgreSQL is running (e.g. docker compose up -d).'
+        message: 'Database server is unreachable. Please verify database connection.'
       });
     }
 
-    const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+    const statusCode = typeof error.statusCode === 'number' && error.statusCode >= 400 ? error.statusCode : 500;
+    
+    // In production, redact generic 500 server errors
+    const message = (statusCode === 500 && env.NODE_ENV === 'production')
+      ? 'An unexpected error occurred. Please try again later.'
+      : (error.message || 'An unexpected error occurred.');
+
     return reply.status(statusCode).send({
       statusCode,
       error: error.name || 'Internal Server Error',
-      message: error.message || 'An unexpected error occurred.'
+      message
     });
   });
 

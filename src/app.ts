@@ -80,7 +80,18 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   });
 
-  // 4. JWT Plugin
+  // 4. Resilient JSON Content-Type Parser (Accepts empty bodies without FST_ERR_CTP_EMPTY_JSON_BODY)
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    try {
+      const json = (typeof body === 'string' && body.trim() !== '') ? JSON.parse(body) : {};
+      done(null, json);
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  });
+
+  // 5. JWT Plugin
   await app.register(jwt, {
     secret: env.JWT_SECRET
   });

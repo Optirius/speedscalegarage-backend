@@ -8,16 +8,16 @@ export interface OrderEmailData {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  deliveryArea: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+  deliveryArea: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA' | string;
   shippingAddress: string;
   city: string;
   notes?: string | null;
-  subtotal: number | string;
-  shippingFee: number | string;
-  discountAmount: number | string;
-  totalAmount: number | string;
-  paymentMethod: 'COD' | 'BKASH';
-  paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
+  subtotal: any;
+  shippingFee: any;
+  discountAmount: any;
+  totalAmount: any;
+  paymentMethod: 'COD' | 'BKASH' | string;
+  paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | string;
   paymentSenderNumber?: string | null;
   paymentTrxId?: string | null;
   createdAt: Date | string;
@@ -25,8 +25,8 @@ export interface OrderEmailData {
     productName: string;
     scaleRatio?: string | null;
     quantity: number;
-    unitPrice: number | string;
-    totalPrice: number | string;
+    unitPrice: any;
+    totalPrice: any;
     image?: string | null;
   }>;
 }

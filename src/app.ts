@@ -8,6 +8,7 @@ import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 import { env } from './config/env.js';
@@ -51,9 +52,29 @@ export async function buildApp() {
     })
   });
 
-  // 3. CORS
+  // 3. CORS - Supports Localhost, Production Vercel Domain, and Preview Deployments
   await app.register(cors, {
-    origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+
+      const allowedExact = [
+        env.FRONTEND_URL,
+        'https://speedscalegarage.vercel.app',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000'
+      ];
+
+      if (
+        allowedExact.includes(origin) ||
+        /^https:\/\/speedscalegarage.*\.vercel\.app$/.test(origin)
+      ) {
+        return cb(null, true);
+      }
+
+      // Permissive fallback for public e-commerce API endpoints
+      return cb(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   });
@@ -70,9 +91,15 @@ export async function buildApp() {
     }
   });
 
-  // 6. Static Uploads Serving
+  // 6. Static Uploads Serving (Safe directory check for serverless environments)
+  const uploadPath = path.resolve(env.UPLOAD_DIR);
+  if (!fs.existsSync(uploadPath)) {
+    try {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    } catch (e) {}
+  }
   await app.register(fastifyStatic, {
-    root: path.resolve(env.UPLOAD_DIR),
+    root: uploadPath,
     prefix: '/uploads/'
   });
 

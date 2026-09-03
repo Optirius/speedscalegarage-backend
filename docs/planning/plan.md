@@ -60,27 +60,57 @@
 
 ## 💳 8. Payment System & Email Notification Module (COD & bKash)
 
-- [ ] **8.1 Schema & Database Updates (`prisma/schema.prisma`)**
-  - [ ] Add `paymentSenderNumber` (String?), `paymentTrxId` (String?), `paymentNotes` (String?) to `Order` model
-  - [ ] Push schema to Supabase with `npx prisma db push` and regenerate Prisma client
-- [ ] **8.2 Transactional Email Notification Service (`src/services/email.service.ts`)**
-  - [ ] Install `nodemailer` and `@types/nodemailer`
-  - [ ] Configure dynamic SMTP transport (via StoreSettings or `.env` fallback)
-  - [ ] Build responsive HTML email template for **Admin Order & bKash Verification Alert**
-  - [ ] Build responsive HTML email template for **Customer Order Receipt & Confirmation**
-- [ ] **8.3 Checkout & Order Processing API Enhancements (`src/routes/order.routes.ts`)**
-  - [ ] Support `paymentMethod: 'COD' | 'BKASH'` in `POST /api/v1/orders/checkout`
-  - [ ] Validate bKash fields (`paymentSenderNumber`, `paymentTrxId`) when `paymentMethod === 'BKASH'`
-  - [ ] Save payment details atomically in database transaction
-  - [ ] Dispatch background email notification to admin notification email configured in StoreSettings
-  - [ ] Add Admin Payment Status update endpoint `PATCH /api/v1/orders/admin/:id/payment`
-- [ ] **8.4 Store Settings Keys for Payments & Notifications (`src/routes/setting.routes.ts`)**
-  - [ ] `admin_notification_email` (Destination for order & TrxID alerts)
-  - [ ] `bkash_number` (bKash Wallet Phone Number for Send Money)
-  - [ ] `bkash_account_type` (Personal / Merchant / Agent)
-  - [ ] `bkash_instructions` (Customer instructions text)
-  - [ ] `cod_enabled` & `bkash_enabled` toggles
-- [ ] **8.5 Backend Unit & Integration Tests (`tests/payment-and-orders.test.ts`)**
-  - [ ] Test COD order creation & email trigger
-  - [ ] Test bKash order creation with sender number and TrxID validation
-  - [ ] Test admin payment verification endpoint
+- [x] **8.1 Schema & Database Updates (`prisma/schema.prisma`)**
+  - [x] Add `paymentSenderNumber` (String?), `paymentTrxId` (String?), `paymentNotes` (String?) to `Order` model
+  - [x] Push schema to Supabase with `npx prisma db push` and regenerate Prisma client
+- [x] **8.2 Transactional Email Notification Service (`src/services/email.service.ts`)**
+  - [x] Install `nodemailer` and `@types/nodemailer`
+  - [x] Configure dynamic SMTP transport (via StoreSettings or `.env` fallback)
+  - [x] Build responsive HTML email template for **Admin Order & bKash Verification Alert**
+  - [x] Build responsive HTML email template for **Customer Order Receipt & Confirmation**
+- [x] **8.3 Checkout & Order Processing API Enhancements (`src/routes/order.routes.ts`)**
+  - [x] Support `paymentMethod: 'COD' | 'BKASH'` in `POST /api/v1/orders/checkout`
+  - [x] Validate bKash fields (`paymentSenderNumber`, `paymentTrxId`) when `paymentMethod === 'BKASH'`
+  - [x] Save payment details atomically in database transaction
+  - [x] Dispatch background email notification to admin notification email configured in StoreSettings
+  - [x] Add Admin Payment Status update endpoint `PATCH /api/v1/orders/admin/:id/payment`
+- [x] **8.4 Store Settings Keys for Payments & Notifications (`src/routes/setting.routes.ts`)**
+  - [x] `admin_notification_email` (Destination for order & TrxID alerts)
+  - [x] `bkash_number` (bKash Wallet Phone Number for Send Money)
+  - [x] `bkash_account_type` (Personal / Merchant / Agent)
+  - [x] `bkash_instructions` (Customer instructions text)
+  - [x] `cod_enabled` & `bkash_enabled` toggles
+- [x] **8.5 Backend Unit & Integration Tests (`tests/payment-and-orders.test.ts`)**
+  - [x] Test COD order creation & email trigger
+  - [x] Test bKash order creation with sender number and TrxID validation
+  - [x] Test admin payment verification endpoint
+
+---
+
+## 👥 9. User Management & Customer 360 Module (`/api/v1/users/admin`)
+
+- [ ] **9.1 Schema & Database Updates (`prisma/schema.prisma`)**
+  - [ ] Add `isActive Boolean @default(true)` to `User` model
+  - [ ] Run `npx prisma db push` and `npx prisma generate`
+  - [ ] Update `tests/setup.ts` in-memory Prismock seed fixtures with `isActive: true`
+- [ ] **9.2 Auth & Security Guard Enforcement**
+  - [ ] Enforce `isActive` check in `/auth/login` and `/auth/facebook` (return 403 if disabled)
+  - [ ] Enforce `isActive` check in `authenticate` middleware (`src/middlewares/auth.middleware.ts`)
+- [ ] **9.3 Admin User Management Endpoints (`src/routes/user.routes.ts`)**
+  - [ ] `GET /api/v1/users/admin`: Paginated customer list with query, role, and status filters, including cart item counts, order counts, and total spend
+  - [ ] `GET /api/v1/users/admin/:id`: Customer 360 detail endpoint returning full profile, live cart items (with product images, variants, unit prices, line totals), orders history, saved addresses, and reviews
+  - [ ] `PATCH /api/v1/users/admin/:id/status`: Toggle active status (`{ isActive: boolean }`)
+  - [ ] `PATCH /api/v1/users/admin/:id/role`: Change role (`{ role: 'ADMIN' | 'CUSTOMER' }`)
+  - [ ] `DELETE /api/v1/users/admin/:id`: Delete customer account with cascading relations
+- [ ] **9.4 Self-Protection Guardrails**
+  - [ ] Prevent admin from disabling their own account
+  - [ ] Prevent admin from demoting their own account
+  - [ ] Prevent disabling or demoting the last remaining active admin
+- [ ] **9.5 Register Router in Fastify Engine (`src/app.ts`)**
+  - [ ] Register `userRoutes` under prefix `/api/v1/users`
+- [ ] **9.6 Backend Unit & Integration Tests (`tests/user.test.ts`)**
+  - [ ] Test admin listing users with search, role, and status filters
+  - [ ] Test Customer 360 detail endpoint with live cart items inspection
+  - [ ] Test enabling and disabling user accounts
+  - [ ] Test role promotion and demotion
+  - [ ] Test self-protection rules (self-demotion / self-disabling blocked)
